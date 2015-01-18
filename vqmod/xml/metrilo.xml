@@ -1,0 +1,189 @@
+<modification>
+	<id><![CDATA[Metrilo for OpenCart]]></id>
+	<version><![CDATA[0.4]]></version>
+	<vqmver><![CDATA[2.1.6]]></vqmver>
+	<author><![CDATA[metrilo.com]]></author>
+
+	<file name="catalog/controller/common/header.php">
+		<operation>
+			<search position="before" offset="1"><![CDATA[$this->render(]]></search>
+			<add><![CDATA[
+				$this->load->model('tool/metrilo');
+				$this->data['metrilo_api_key'] = $this->model_tool_metrilo->getMetriloApiKey();
+				if($this->customer->isLogged()){
+					$this->model_tool_metrilo->ensureCustomerIdentify($this->customer);
+				}
+				$this->model_tool_metrilo->flushEventsFromSession();
+				$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+				$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/common/header.tpl">
+		<operation>
+			<search position="before" offset="1"><![CDATA[</head>]]></search>
+			<add><![CDATA[
+<script type="text/javascript">
+window.metrilo||(window.metrilo=[]),window.metrilo.q=[],mth=["identify","track","event","pageview","purchase","debug","atr"],sk=function(e){return function(){a=Array.prototype.slice.call(arguments);a.unshift(e);window.metrilo.q.push(a)}};for(var i=0;mth.length>i;i++){window.metrilo[mth[i]]=sk(mth[i])}window.metrilo.load=function(e){var t=document,n=t.getElementsByTagName("script")[0],r=t.createElement("script");r.type="text/javascript";r.async=true;r.src="//t.metrilo.com/j/"+e+".js";n.parentNode.insertBefore(r,n)};
+<?php if(isset($metrilo_api_key) && ($metrilo_api_key != '')) { ?>
+metrilo.load("<?= $metrilo_api_key ?>");
+<?php } ?>
+<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+<?php echo $metrilo_tracking_script; ?>
+<?php } ?>
+</script>
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/controller/product/product.php">
+		<operation>
+			<search position="before" offset="1"><![CDATA[$this->render(]]></search>
+			<add><![CDATA[
+				// Load Product View event in queue
+				$this->load->model('tool/metrilo');
+				$this->model_tool_metrilo->addProductViewEvent();
+				$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+				$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/product/product.tpl">
+		<operation>
+			<search position="before" offset="0"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+				<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+					<script type="text/javascript">
+					<?php echo $metrilo_tracking_script; ?>
+					</script>
+				<?php	} ?>
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/controller/product/category.php">
+		<operation>
+			<search position="after" offset="1"><![CDATA[getCategory($category_id)]]></search>
+			<add><![CDATA[
+				// Load Category View event in queue
+				$this->load->model('tool/metrilo');
+				if(isset($category_info) && $category_info){
+					$this->model_tool_metrilo->addCategoryViewEvent($category_info);
+				}
+				$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+				$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/product/category.tpl">
+		<operation>
+			<search position="before" offset="0"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+				<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+					<script type="text/javascript">
+					<?php echo $metrilo_tracking_script; ?>
+					</script>
+				<?php	} ?>
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/controller/checkout/checkout.php">
+		<operation>
+			<search position="before" offset="1"><![CDATA[$this->render(]]></search>
+			<add><![CDATA[
+				// Load Product View event in queue
+				$this->load->model('tool/metrilo');
+				$this->model_tool_metrilo->addEventInQueue('event', 'checkout_start');
+				$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+				$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/checkout/checkout.tpl">
+		<operation>
+			<search position="before" offset="0"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+				<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+					<script type="text/javascript">
+					<?php echo $metrilo_tracking_script; ?>
+					</script>
+				<?php	} ?>
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/controller/checkout/cart.php">
+		<operation>
+			<search position="before" offset="1"><![CDATA[$this->render(]]></search>
+			<add><![CDATA[
+				// Load Product View event in queue
+				$this->load->model('tool/metrilo');
+				$this->model_tool_metrilo->addEventInQueue('event', 'view_cart');
+				$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+				$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/checkout/cart.tpl">
+		<operation>
+			<search position="before" offset="0"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+				<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+					<script type="text/javascript">
+					<?php echo $metrilo_tracking_script; ?>
+					</script>
+				<?php	} ?>
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/controller/checkout/cart.php">
+		<operation>
+			<search position="before" offset="1"><![CDATA[setOutput(json_encode($json))]]></search>
+			<add><![CDATA[
+				// Added to cart - put in session
+				if(isset($product_info) && isset($quantity)){
+					$this->load->model('tool/metrilo');
+					$this->model_tool_metrilo->addToCartEvent($product_info, $quantity);
+				}
+			]]></add>
+		</operation>
+	</file>
+
+
+	<file name="catalog/controller/checkout/success.php">
+		<operation>
+			<search position="after"><![CDATA[function index() {]]></search>
+			<add><![CDATA[
+				if (isset($this->session->data['order_id']) and (!empty($this->session->data['order_id']))) {
+					$this->load->model('tool/metrilo');
+					$this->model_tool_metrilo->orderPlaced($this->session->data['order_id']);
+					$this->data['metrilo_has_events_in_queue'] 	= $this->model_tool_metrilo->hasEventsInQueue();
+					$this->data['metrilo_tracking_script'] 		= $this->model_tool_metrilo->renderTrackingScript();
+				}
+			]]></add>
+		</operation>
+	</file>
+
+	<file name="catalog/view/theme/*/template/common/success.tpl">
+		<operation>
+			<search position="before" offset="0"><![CDATA[<?php echo $footer; ?>]]></search>
+			<add><![CDATA[
+				<?php if(isset($metrilo_has_events_in_queue) && $metrilo_has_events_in_queue) { ?>
+					<script type="text/javascript">
+					<?php echo $metrilo_tracking_script; ?>
+					</script>
+				<?php	} ?>
+			]]></add>
+		</operation>
+	</file>
+
+
+
+</modification>
