@@ -44,7 +44,7 @@ class ModelToolMetrilo extends Model {
 			);
 			if(isset($product['image']) && !empty($product['image'])){
 				$image_url = $this->model_tool_image->resize($product['image'], 500, 500);
-				$productData['image'] = $image_url;
+				$productData['image_url'] = $image_url;
 			}
 
 			$this->addEventInQueue('event', 'view_product', $productData);
